@@ -1,0 +1,2 @@
+source /home/cole/esp32/bass-hero/build/bootloader/gdbinit/symbols
+source /home/cole/esp32/bass-hero/build/bootloader/gdbinit/connect
