@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS "lcd_driver.cpp"
+    SRCS "oled_driver.cpp"
     INCLUDE_DIRS "."
     REQUIRES driver
 )
