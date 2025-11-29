@@ -1,18 +1,22 @@
 #include "basshero.h"
-#include "oled_driver.h"
-#include "driver/i2c_master.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include <cstring>
-#include <vector>
+#include "esp_log.h"
+
+static const char* TAG = "BassHero";
 
 constexpr int I2C_MASTER_SCL_IO = 22;
 constexpr int I2C_MASTER_SDA_IO = 21;
 constexpr i2c_port_t I2C_MASTER_NUM = I2C_NUM_0;
 constexpr int I2C_MASTER_FREQ_HZ = 400000;
 
-BassHero::BassHero() {
-    // Constructor can preload song or initialize members if needed
+BassHero::BassHero() : sd(19, 23, 18, 5) {
+    if (!sd.mount("/sdcard")) {
+        printf("Mount failed\n");
+        return;
+    }
+}
+
+BassHero::~BassHero() {
+    sd.unmount();
 }
 
 void BassHero::initializeOLED() {
@@ -39,7 +43,7 @@ void BassHero::loadExampleSong() {
     currentSong.tabCharsPerBar = 28;
 
     currentSong.tuning = {
-        "Eb", "A", "D", "G#",
+        "E", "A", "D", "G",
     };
 
     currentSong.bars = {
@@ -108,6 +112,27 @@ void BassHero::gameTask(void* param) {
     for (int i = 0; i < self->currentSong.tuning.size(); ++i) {
         self->tuneWidth = std::max(self->tuneWidth, self->currentSong.tuning[i].size());
     }
+
+    // sd card test
+    self->sd.writeFile("/sdcard/test.txt", "Hello from C++ class!\n");
+    self->sd.appendFile("/sdcard/test.txt", "Appending line...\n");
+
+    self->sd.writeFile("/sdcard/tabs/newTab.bh1", "Example Tabs\n");
+
+    const std::vector<std::string> files = self->sd.listDirectory("/sdcard");
+    ESP_LOGI(TAG, "ls sdcard");
+    for (const auto& f : files) {
+        ESP_LOGI(TAG, "%s", f.c_str());
+    }
+
+    const std::vector<std::string> files2 = self->sd.listDirectory("/sdcard/tabs");
+    ESP_LOGI(TAG, "ls sdcard/tabs");
+    for (const auto& f : files2) {
+        ESP_LOGI(TAG, "%s", f.c_str());
+    }
+    
+    const std::string contents = self->sd.readFile("/sdcard/tabs/newTab.bh1");
+    ESP_LOGI(TAG, "Reading file: /sdcard/test.txt:\n%s", contents.c_str());
 
     while (true) {
         self->updateDisplay();
