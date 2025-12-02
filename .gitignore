@@ -2,3 +2,7 @@ sdkconfig
 sdkconfig.old
 build/
 .vscode
+compile_commands.json
+compile_flags.txt
+.clangd
+.cache

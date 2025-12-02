@@ -1,7 +1,12 @@
 #include "basshero.h"
 #include "esp_log.h"
+#include "oled_driver.h"
 
 static const char* TAG = "BassHero";
+
+constexpr gpio_num_t BUTTON_UP = GPIO_NUM_12;
+constexpr gpio_num_t BUTTON_DOWN = GPIO_NUM_13;
+constexpr gpio_num_t BUTTON_SELECT = GPIO_NUM_14;
 
 constexpr int I2C_MASTER_SCL_IO = 22;
 constexpr int I2C_MASTER_SDA_IO = 21;
@@ -100,44 +105,88 @@ void BassHero::updateDisplay() {
 void BassHero::gameTask(void* param) {
     auto* self = static_cast<BassHero*>(param);
     self->initializeOLED();
-    self->loadExampleSong();
+    // self->loadExampleSong();
 
-    // Display header
-    oled_display_text(self->currentSong.title.c_str(), 0);
-    oled_display_text("colechiodo.cc", 7);
-    oled_update();
+    // // Display header
+    // oled_display_text(self->currentSong.title.c_str(), 0);
+    // oled_display_text("colechiodo.cc", 7);
+    // oled_update();
 
-    int msDelay = self->getDelayMs();
+    // int msDelay = self->getDelayMs();
 
-    for (int i = 0; i < self->currentSong.tuning.size(); ++i) {
-        self->tuneWidth = std::max(self->tuneWidth, self->currentSong.tuning[i].size());
-    }
+    // for (int i = 0; i < self->currentSong.tuning.size(); ++i) {
+    //     self->tuneWidth = std::max(self->tuneWidth, self->currentSong.tuning[i].size());
+    // }
 
     // sd card test
-    self->sd.writeFile("/sdcard/test.txt", "Hello from C++ class!\n");
-    self->sd.appendFile("/sdcard/test.txt", "Appending line...\n");
-
-    self->sd.writeFile("/sdcard/tabs/newTab.bh1", "Example Tabs\n");
-
-    const std::vector<std::string> files = self->sd.listDirectory("/sdcard");
-    ESP_LOGI(TAG, "ls sdcard");
+	self->sd.writeFile("/sdcard/tabs/test0.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test1.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test2.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test3.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test4.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test5.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test6.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test7.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test8.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test9.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test10.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test11.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test12.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test13.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test14.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test15.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test16.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test17.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test18.bh1", "Test");
+	self->sd.writeFile("/sdcard/tabs/test19.bh1", "Test");
+	
+    const std::vector<std::string> files = self->sd.listDirectory("/sdcard/tabs");
+	ESP_LOGI(TAG, "Tab files found: %d", files.size());
+	ESP_LOGI(TAG, "ls sdcard/tabs");
     for (const auto& f : files) {
         ESP_LOGI(TAG, "%s", f.c_str());
     }
 
-    const std::vector<std::string> files2 = self->sd.listDirectory("/sdcard/tabs");
-    ESP_LOGI(TAG, "ls sdcard/tabs");
-    for (const auto& f : files2) {
-        ESP_LOGI(TAG, "%s", f.c_str());
-    }
-    
-    const std::string contents = self->sd.readFile("/sdcard/tabs/newTab.bh1");
-    ESP_LOGI(TAG, "Reading file: /sdcard/test.txt:\n%s", contents.c_str());
+    int scrollIndex = 0;
+	int selectIndex = 0;
+	std::string selectPrefix = "> ";
+	
+	Button btnUp(BUTTON_UP);
+	Button btnDown(BUTTON_DOWN);
+	Button btnSelect(BUTTON_SELECT);
 
     while (true) {
-        self->updateDisplay();
-        self->scrollIndex++;
-        vTaskDelay(pdMS_TO_TICKS(msDelay));
+        // self->updateDisplay();
+        // self->scrollIndex++;
+		if (btnUp.isPressed()) {
+			if (selectIndex != 0) selectIndex--;
+			else if (scrollIndex != 0) {
+				scrollIndex--;
+				oled_clear_screen();
+			}
+		}
+		if (btnDown.isPressed()) {
+			if (selectIndex != files.size() - 1 && selectIndex < 7) selectIndex++;
+			else if (selectIndex == 7 && scrollIndex + 7 < files.size() - 1) {
+				scrollIndex++;
+				oled_clear_screen();
+			}
+		}
+		if (btnSelect.isPressed()) {
+			ESP_LOGI(TAG, "Selected %s", files[scrollIndex + selectIndex].c_str());
+		}
+
+		for (int i = 0; i < 8; i++) {
+			if (scrollIndex + i >= files.size()) break;
+			if (selectIndex == i) {
+				oled_display_text((selectPrefix + files[scrollIndex + i]).c_str(), i);
+			} else {
+				oled_display_text(files[scrollIndex + i].c_str(), i);
+			}
+		}
+		oled_update();
+
+        // vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 

@@ -7,6 +7,7 @@
 
 #include "oled_driver.h"
 #include "sd_driver.h"
+#include "button.h"
 
 #include "driver/i2c_master.h"
 #include "freertos/FreeRTOS.h"
