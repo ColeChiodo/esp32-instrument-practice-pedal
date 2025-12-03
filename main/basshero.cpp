@@ -1,6 +1,5 @@
 #include "basshero.h"
-#include "esp_log.h"
-#include "oled_driver.h"
+#include <system_error>
 
 static const char* TAG = "BassHero";
 
@@ -40,7 +39,10 @@ void BassHero::initializeOLED() {
     oled_clear_screen();
 }
 
-void BassHero::loadExampleSong() {
+void BassHero::loadSong(std::string file, auto* self) {
+	std::string filePath = "/sdcard/tabs/" + file;
+	ESP_LOGI(TAG, "File loaded: %s", filePath.c_str());
+	self->sd.getMetadata(filePath);
     currentSong.title = "Creep - Radiohead";
     currentSong.author = "Radiohead";
     currentSong.bpm = 93;
@@ -105,46 +107,15 @@ void BassHero::updateDisplay() {
 void BassHero::gameTask(void* param) {
     auto* self = static_cast<BassHero*>(param);
     self->initializeOLED();
-    // self->loadExampleSong();
 
-    // // Display header
-    // oled_display_text(self->currentSong.title.c_str(), 0);
-    // oled_display_text("colechiodo.cc", 7);
-    // oled_update();
+	// Scan for all zip files and extract
+	self->sd.scanZips("/sdcard/tabs");
 
-    // int msDelay = self->getDelayMs();
-
-    // for (int i = 0; i < self->currentSong.tuning.size(); ++i) {
-    //     self->tuneWidth = std::max(self->tuneWidth, self->currentSong.tuning[i].size());
-    // }
-
-    // sd card test
-	self->sd.writeFile("/sdcard/tabs/test0.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test1.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test2.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test3.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test4.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test5.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test6.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test7.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test8.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test9.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test10.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test11.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test12.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test13.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test14.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test15.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test16.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test17.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test18.bh1", "Test");
-	self->sd.writeFile("/sdcard/tabs/test19.bh1", "Test");
-	
+    // Load Tabs from SDCard
     const std::vector<std::string> files = self->sd.listDirectory("/sdcard/tabs");
 	ESP_LOGI(TAG, "Tab files found: %d", files.size());
-	ESP_LOGI(TAG, "ls sdcard/tabs");
     for (const auto& f : files) {
-        ESP_LOGI(TAG, "%s", f.c_str());
+        ESP_LOGI(TAG, "%s", self->sd.readFile("/sdcard/tabs/" + f + "/.meta").c_str());
     }
 
     int scrollIndex = 0;
@@ -156,8 +127,6 @@ void BassHero::gameTask(void* param) {
 	Button btnSelect(BUTTON_SELECT);
 
     while (true) {
-        // self->updateDisplay();
-        // self->scrollIndex++;
 		if (btnUp.isPressed()) {
 			if (selectIndex != 0) selectIndex--;
 			else if (scrollIndex != 0) {
@@ -173,7 +142,8 @@ void BassHero::gameTask(void* param) {
 			}
 		}
 		if (btnSelect.isPressed()) {
-			ESP_LOGI(TAG, "Selected %s", files[scrollIndex + selectIndex].c_str());
+			self->playTab(self, files[scrollIndex + selectIndex].c_str());
+			oled_clear_screen();
 		}
 
 		for (int i = 0; i < 8; i++) {
@@ -185,11 +155,39 @@ void BassHero::gameTask(void* param) {
 			}
 		}
 		oled_update();
-
-        // vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
+void BassHero::playTab(auto* self, std::string file) {
+	vTaskDelay(pdMS_TO_TICKS(50));
+	oled_clear_screen();
+
+	self->loadSong(file, self);
+
+    // Display header
+    oled_display_text(self->currentSong.title.c_str(), 0);
+    oled_display_text("colechiodo.cc", 7);
+    oled_update();
+
+    int msDelay = self->getDelayMs();
+
+    for (int i = 0; i < self->currentSong.tuning.size(); ++i) {
+        self->tuneWidth = std::max(self->tuneWidth, self->currentSong.tuning[i].size());
+    }
+
+	Button btnSelect(BUTTON_SELECT);
+	
+	bool playing = true;
+    while (playing) {
+		if (btnSelect.isPressed()) {
+			playing = false;
+		}
+        self->updateDisplay();
+        self->scrollIndex++;
+		vTaskDelay(pdMS_TO_TICKS(msDelay));
+	}
+}
+
 void BassHero::startGame() {
-    xTaskCreatePinnedToCore(gameTask, "basshero_task", 4096, this, 5, nullptr, 1);
+	xTaskCreatePinnedToCore(gameTask, "basshero_task", 32768, this, 5, nullptr, 1);
 }

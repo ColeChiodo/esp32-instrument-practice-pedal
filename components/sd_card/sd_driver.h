@@ -3,6 +3,10 @@
 #include <string>
 #include <vector>
 #include <stdio.h>
+#include <fstream>
+#include <cstring>
+#include <cstdio>
+#include <unistd.h> 
 
 #include <dirent.h>
 #include <sys/stat.h>
@@ -24,7 +28,9 @@ class SDCard {
         bool writeFile(const std::string& path, const std::string& data);
         bool appendFile(const std::string& path, const std::string& data);
         std::string readFile(const std::string& path);
-
+		void getMetadata(const std::string& path);
+		
+		void scanZips(const std::string& path);
         std::vector<std::string> listDirectory(const std::string& path = "/sdcard");
 
     private:
@@ -38,5 +44,6 @@ class SDCard {
         std::string mountPoint;
         bool mounted = false;
         
+		bool unzipFile(const std::string& path);
         bool createDirectory(const std::string& path);
 };

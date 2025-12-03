@@ -45,8 +45,9 @@ class BassHero {
         char lineBuffer[DISPLAY_WIDTH_CHARS + 2]{};
 
         void initializeOLED();
-        void loadExampleSong();
+        void loadSong(std::string file, auto* self);
         int getDelayMs() const;
         void updateDisplay();
+		void playTab(auto* self, std::string file);
         static void gameTask(void* param);
 };

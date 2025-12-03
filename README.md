@@ -97,7 +97,12 @@ idf.py set-target esp32
 # idf.py fullclean
 idf.py build
 ```
-3. **Flash the ESP, monitor the serial output**
+3. **Edit the esp settings**
+```bash
+idf.py menuconfig
+# Component config -> FAT Filesystem Support -> Long Filename Support -> Buffer in Heap -> [Q]uit -> [S]ave
+```
+4. **Flash the ESP, monitor the serial output**
 ```bash
 # Hold down "BOOT" button on the ESP, then run:
 idf.py -p /dev/ttyUSB0 flash monitor
