@@ -1,6 +1,6 @@
 # Bass Hero - Guitar Pedal (WIP)
 
-![Image showing proof of concept of device](misc/assets/concept.png)
+![GIF of a Demo of the project.](misc/assets/demo.gif)
 
 This project is an open-source **guitar pedal** built around an **ESP32**. It's a game that you can play with your guitar/bass, reading tablature and providing real-time feedback on the player's pitch and timing accuracy (similar to [Rocksmith](https://store.steampowered.com/app/221680/Rocksmith_2014_Edition_REMASTERED_LEARN__PLAY/)).
 
@@ -108,9 +108,14 @@ idf.py menuconfig
 idf.py -p /dev/ttyUSB0 flash monitor
 # `CTRL` + `]` to stop monitoring
 ```
-optionally, erase using:
+**optionally, erase flash using:**
 ```bash
 idf.py -p /dev/ttyUSB0 erase-flash
 ```
+
+### Libraries Used:
+**[Miniz](https://github.com/richgel999/miniz)** - used to extract `.zip` files of tabs upon startup.
+
 ***
+
 **© 2025 [colechiodo.cc](https://colechiodo.cc) | MIT License**
