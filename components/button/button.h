@@ -4,7 +4,7 @@
 #include "freertos/task.h"
 #include "driver/gpio.h"
 
-#define DEBOUNCE_MS 50
+#define DEBOUNCE_MS 10
 
 class Button {
 	public:

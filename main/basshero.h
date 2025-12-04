@@ -30,17 +30,16 @@ class BassHero {
             std::array<std::string, NUM_STRINGS> lines;
         };
 
-        struct Song {
-            std::string title;
-            std::string artist;
-            int bpm{};
+        struct Tab {
+            Metadata meta;
+			int bpm{};
             int beatsPerBar{};
             int tabCharsPerBar{};
             std::vector<std::string> tuning;
             std::vector<TabBar> bars;
         };
 
-        Song currentSong;
+        Tab currentTab;
         unsigned int scrollIndex = 0;
         char lineBuffer[DISPLAY_WIDTH_CHARS + 2]{};
 
@@ -48,6 +47,7 @@ class BassHero {
         void loadSong(std::string file, auto* self);
         int getDelayMs() const;
         void updateDisplay();
-		void playTab(auto* self, std::string file);
+		void selectInstrument(auto* self, std::string file);
+		void playTab(auto* self, std::string file, std::string instrument);
         static void gameTask(void* param);
 };
