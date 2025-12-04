@@ -6,6 +6,21 @@ extern "C" {
 
 static const char* TAG = "SDCard";
 
+// helpers
+uint32_t read_u32_le(std::ifstream &f) {
+    uint8_t b[4];
+    f.read(reinterpret_cast<char*>(b), 4);
+    return (uint32_t(b[0]) | (uint32_t(b[1]) << 8) |
+            (uint32_t(b[2]) << 16) | (uint32_t(b[3]) << 24));
+}
+
+std::string read_string(std::ifstream &f) {
+    uint32_t len = read_u32_le(f);
+    std::vector<char> buf(len);
+    f.read(buf.data(), len);
+    return std::string(buf.begin(), buf.end());
+}
+
 /**
  * @brief Construct a new SDCard::SDCard object
  * 
@@ -151,8 +166,25 @@ std::string SDCard::readFile(const std::string& path) {
     return contents;
 }
 
-void SDCard::getMetadata(const std::string& path) {
-	
+Metadata SDCard::getMetadata(const std::string& path) {
+	Metadata meta;
+
+	std::ifstream f(path + "/.meta", std::ios::binary);
+    if (!f) {
+		ESP_LOGE(TAG, "Failed to open %s", (path + "/.meta").c_str());
+		return meta;
+	}
+
+	f.read(meta.magic, 4);
+    f.read(reinterpret_cast<char*>(&meta.version), 1);
+
+    meta.title      = read_string(f);
+    meta.artist     = read_string(f);
+    meta.album      = read_string(f);
+    meta.year       = read_string(f);
+    meta.tab_author = read_string(f);
+
+	return meta;
 }
 
 std::vector<std::string> SDCard::listDirectory(const std::string& path) {

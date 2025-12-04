@@ -32,7 +32,7 @@ class BassHero {
 
         struct Song {
             std::string title;
-            std::string author;
+            std::string artist;
             int bpm{};
             int beatsPerBar{};
             int tabCharsPerBar{};

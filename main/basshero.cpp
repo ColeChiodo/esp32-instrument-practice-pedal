@@ -1,5 +1,6 @@
 #include "basshero.h"
-#include <system_error>
+#include "BassHeroTabsBinary.h"
+#include "esp_log.h"
 
 static const char* TAG = "BassHero";
 
@@ -42,9 +43,9 @@ void BassHero::initializeOLED() {
 void BassHero::loadSong(std::string file, auto* self) {
 	std::string filePath = "/sdcard/tabs/" + file;
 	ESP_LOGI(TAG, "File loaded: %s", filePath.c_str());
-	self->sd.getMetadata(filePath);
-    currentSong.title = "Creep - Radiohead";
-    currentSong.author = "Radiohead";
+	Metadata meta = self->sd.getMetadata(filePath);
+    currentSong.title = meta.title;
+    currentSong.artist = meta.artist;
     currentSong.bpm = 93;
     currentSong.beatsPerBar = 4;
     currentSong.tabCharsPerBar = 28;
@@ -115,7 +116,8 @@ void BassHero::gameTask(void* param) {
     const std::vector<std::string> files = self->sd.listDirectory("/sdcard/tabs");
 	ESP_LOGI(TAG, "Tab files found: %d", files.size());
     for (const auto& f : files) {
-        ESP_LOGI(TAG, "%s", self->sd.readFile("/sdcard/tabs/" + f + "/.meta").c_str());
+        Metadata meta = self->sd.getMetadata("/sdcard/tabs/" + f);
+		ESP_LOGI(TAG, "%s | %s | %s", meta.title.c_str(), meta.artist.c_str(), meta.year.c_str());
     }
 
     int scrollIndex = 0;
@@ -166,7 +168,8 @@ void BassHero::playTab(auto* self, std::string file) {
 
     // Display header
     oled_display_text(self->currentSong.title.c_str(), 0);
-    oled_display_text("colechiodo.cc", 7);
+    oled_display_text(self->currentSong.artist.c_str(), 1);
+	oled_display_text("colechiodo.cc", 7);
     oled_update();
 
     int msDelay = self->getDelayMs();

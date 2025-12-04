@@ -17,6 +17,8 @@
 #include "driver/spi_common.h"
 #include "driver/sdspi_host.h"
 
+#include "BassHeroTabsBinary.h"
+
 class SDCard {
     public:
         SDCard(int miso, int mosi, int clk, int cs, spi_host_device_t host = SPI2_HOST);
@@ -28,7 +30,7 @@ class SDCard {
         bool writeFile(const std::string& path, const std::string& data);
         bool appendFile(const std::string& path, const std::string& data);
         std::string readFile(const std::string& path);
-		void getMetadata(const std::string& path);
+		Metadata getMetadata(const std::string& path);
 		
 		void scanZips(const std::string& path);
         std::vector<std::string> listDirectory(const std::string& path = "/sdcard");
